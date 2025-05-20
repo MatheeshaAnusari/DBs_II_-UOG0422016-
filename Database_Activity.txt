@@ -1,0 +1,172 @@
+01)
+
+CREATE OR REPLACE PROCEDURE add_numbers(num1 INT, num2 INT)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    result INT;
+BEGIN
+    result := num1 + num2;
+    RAISE NOTICE 'The sum of % and % is %', num1, num2, result;
+END;
+$$;
+
+
+02)
+
+CREATE OR REPLACE PROCEDURE print_full_name(first_name TEXT, last_name TEXT)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    full_name TEXT;
+BEGIN
+    full_name := first_name || ' ' || last_name;
+    RAISE NOTICE 'Full Name: %', full_name;
+END;
+$$;
+
+
+03)
+04)
+
+\c ABXCompany
+CREATE TABLE IF NOT EXISTS products (
+    product_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name TEXT NOT NULL,
+    price NUMERIC(10, 2) NOT NULL,
+    stock_quantity INT NOT NULL
+);
+
+CREATE OR REPLACE PROCEDURE add_product(
+    product_name TEXT,
+    product_price NUMERIC,
+    product_stock INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    INSERT INTO products(name, price, stock_quantity)
+    VALUES (product_name, product_price, product_stock);
+    
+    RAISE NOTICE 'Product % added successfully.', product_name;
+END;
+$$;
+
+CALL add_product('Laptop', 1250.00, 15);
+CALL add_product('Smartphone', 799.99, 30);
+CALL add_product('Keyboard', 49.50, 100);
+
+05)
+
+CREATE OR REPLACE PROCEDURE get_product_by_id(p_id INT)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    p_name TEXT;
+    p_price NUMERIC;
+    p_stock INT;
+BEGIN
+    SELECT name, price, stock_quantity
+    INTO p_name, p_price, p_stock
+    FROM products
+    WHERE product_id = p_id;
+
+    RAISE NOTICE 'Product ID: %, Name: %, Price: %, Stock: %',
+                 p_id, p_name, p_price, p_stock;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE NOTICE 'No product found with ID %', p_id;
+END;
+$$;
+
+
+06)CREATE OR REPLACE PROCEDURE get_product_by_id(p_id INT)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    p_name TEXT;
+    p_price NUMERIC;
+    p_stock INT;
+BEGIN
+    SELECT name, price, stock_quantity
+    INTO p_name, p_price, p_stock
+    FROM products
+    WHERE product_id = p_id;
+
+    RAISE NOTICE 'Product ID: %, Name: %, Price: %, Stock: %',
+                 p_id, p_name, p_price, p_stock;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE NOTICE 'No product found with ID %', p_id;
+END;
+$$;
+
+
+07)CREATE OR REPLACE PROCEDURE delete_product(p_id INT)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    DELETE FROM products
+    WHERE product_id = p_id;
+
+    IF FOUND THEN
+        RAISE NOTICE 'Product with ID % deleted successfully.', p_id;
+    ELSE
+        RAISE NOTICE 'No product found with ID %.', p_id;
+    END IF;
+END;
+$$;
+
+08)
+
+CREATE OR REPLACE PROCEDURE calculate_total_stock_value_of_product(p_id INT)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    p_price NUMERIC;
+    p_stock INT;
+    total_value NUMERIC;
+BEGIN
+    SELECT price, stock_quantity
+    INTO p_price, p_stock
+    FROM products
+    WHERE product_id = p_id;
+
+    total_value := p_price * p_stock;
+
+    RAISE NOTICE 'Total stock value for product ID % is %.', p_id, total_value;
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE NOTICE 'No product found with ID %.', p_id;
+END;
+$$;
+
+09)
+
+10)CREATE OR REPLACE PROCEDURE check_stock_level(p_id INT)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    p_stock INT;
+BEGIN
+    SELECT stock_quantity
+    INTO p_stock
+    FROM products
+    WHERE product_id = p_id;
+
+    IF p_stock <= 10 THEN
+        RAISE NOTICE 'Stock Level: Low stock (% units)', p_stock;
+    ELSIF p_stock > 10 AND p_stock <= 55 THEN
+        RAISE NOTICE 'Stock Level: Sufficient stock (% units)', p_stock;
+    ELSE
+        RAISE NOTICE 'Stock Level: High stock (% units)', p_stock;
+    END IF;
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE NOTICE 'No product found with ID %.', p_id;
+END;
+$$;
+
+
