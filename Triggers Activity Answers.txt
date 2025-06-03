@@ -1,0 +1,60 @@
+Triggers Activity Answers
+
+(10)
+
+CREATE TRIGGER trg_ValidateSalary
+ON Employees
+INSTEAD OF INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO Employees (EmpID, EmpName, Salary)
+    SELECT EmpID, EmpName, Salary
+    FROM inserted
+    WHERE Salary >= 2000;
+
+    INSERT INTO AuditLog (EmpName, Salary, Reason, AttemptTime)
+    SELECT EmpName, Salary, 'Salary below minimum threshold', GETDATE()
+    FROM inserted
+    WHERE Salary < 2000;
+END;
+
+(11)
+
+CREATE TRIGGER trg_LogDeleteAttempt
+ON EmployeeView
+INSTEAD OF DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO AuditLog (EmployeeID, Action, ActionTime)
+    SELECT EmpID, 'DELETE ATTEMPT', GETDATE()
+    FROM deleted;
+
+END;
+
+(12)
+
+CREATE TRIGGER trg_LogSalaryUpdate
+ON EmployeeView
+INSTEAD OF UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO AuditLog (EmployeeID, Action, OldValue, NewValue, ActionTime)
+    SELECT 
+        d.EmpID,
+        'SALARY UPDATE ATTEMPT',
+        d.Salary,
+        i.Salary,
+        GETDATE()
+    FROM 
+        deleted d
+        INNER JOIN inserted i ON d.EmpID = i.EmpID
+    WHERE 
+        d.Salary <> i.Salary;
+
+    END;
